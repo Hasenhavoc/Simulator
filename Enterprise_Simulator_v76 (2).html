@@ -1403,7 +1403,7 @@ function renderMultiSKUSummary(){
   h+='<tr style="background:rgba(0,0,0,.1)">';
   activeSkus.forEach(function(s){
     h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:right;color:var(--a4);font-size:6.5px;border-left:2px solid '+s.color+'">Hist</th>';
-    h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:center;color:var(--ac);font-size:6.5px">✏ Act</th>';
+    h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:center;color:var(--ac);font-size:6.5px">Act (read-only in S4)</th>';
     h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:center;color:var(--a3);font-size:6.5px">Fcst</th>';
     h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:right;color:var(--td);font-size:6.5px">Δ</th>';
     h+='<th style="padding:2px 4px;border-bottom:1px solid var(--br);text-align:center;color:var(--a2);font-size:6.5px">📡 Sens%</th>';
@@ -1451,7 +1451,7 @@ function renderMultiSKUSummary(){
       var sensColor=sensDev===null?'var(--td)':Math.abs(sensDev)>20?'var(--dg)':Math.abs(sensDev)>10?'var(--a4)':'var(--ac)';
       var sensDisp=sensDev!==null?((sensDev>=0?'+':'')+sensDev+'%'):'—';
       h+='<td style="padding:2px 4px;text-align:right;color:var(--a4);border-left:2px solid '+s.color+'">'+hist+'</td>';
-      h+='<td style="padding:1px 3px;text-align:center"><input class="ea" style="width:38px;font-size:7px" value="'+actual+'" placeholder="—" onchange="updateActualsForSKU(\''+s.id+'\','+mi+',this.value)" title="Enter actual sales for '+MNS[mi]+'"></td>';
+      h+='<td style="padding:2px 4px;text-align:center;color:var(--ac)">'+(actual!==''?actual:'—')+'</td>';
       h+='<td style="padding:2px 4px;text-align:center;min-width:55px"><div style="display:flex;align-items:center;gap:2px"><div style="width:36px;height:6px;background:var(--s2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+barPct+'%;background:'+s.color+';opacity:0.65"></div></div><span style="font-size:6.5px;color:var(--a3)">'+fcst+'</span></div></td>';
       h+='<td style="padding:2px 4px;text-align:right;color:'+deltaColor+';font-size:6.5px">'+(delta>0?'+':'')+delta+'</td>';
       h+='<td style="padding:2px 4px;text-align:center;color:'+sensColor+';font-size:6.5px">'+sensDisp+'</td>';
@@ -1476,7 +1476,7 @@ function renderMultiSKUSummary(){
           var wSens=sWP&&sWP.act!=null&&sWP.fcst>0?Math.round((sWP.act-sWP.fcst)/sWP.fcst*100):null;
           h+='<td style="padding:1px 4px;text-align:right;color:var(--td);border-left:2px solid '+s.color+'">'+(sWP?sWP.fcst:'—')+'</td>';
           var wOnchange='(function(v){var sd=SKUData["'+s.id+'"];if(!sd||!sd.periods)return;var pp=sd.periods.find(function(x){return x.id==="'+wp.id+'";});if(pp){pp.act=(v==="")?null:+v;if(typeof runMultiSKUPipeline==="function"){runMultiSKUPipeline();renderMultiSKUSummary();}}})(this.value)';
-          h+='<td style="padding:1px 3px;text-align:center"><input class="e" style="width:34px;font-size:6.5px" value="'+wAct+'" placeholder="—" onchange="'+wOnchange+'" title="Week actual"></td>';
+          h+='<td style="padding:1px 3px;text-align:center;color:var(--ac);font-size:6.5px">'+(wAct!==''?'<b>'+wAct+'</b>':'—')+'</td>';
           h+='<td style="padding:1px 4px;text-align:center;font-size:6.5px;color:var(--a3)">'+wFcst+'</td>';
           var wDc=typeof wDelta==='number'?(wDelta>0?'var(--ac)':wDelta<0?'var(--dg)':'var(--td)'):'var(--td)';
           h+='<td style="padding:1px 4px;text-align:right;color:'+wDc+';font-size:6.5px">'+(typeof wDelta==='number'?(wDelta>=0?'+':'')+wDelta:wDelta)+'</td>';
@@ -1620,8 +1620,17 @@ function renderMultiSKUSummary(){
 
   // ── S4 sub-section A: Monthly MPS Schedule ──
   h+='<div style="padding:5px 12px 0;font-size:7.5px;font-weight:700;color:var(--a2);font-family:JetBrains Mono,monospace;border-bottom:1px solid var(--br);background:rgba(0,180,216,.03)">📅 Production Schedule (Forecast → Actuals → Daily Cap → WW-DP Plan)</div>';
+  var solverStatus=(typeof solver!=='undefined'&&solver&&solver.Solve)?'✔ LP solver available':'⚠ LP solver missing (WW-DP fallback)';
+  h+='<div style="padding:6px 10px;font-size:7px;color:'+(solverStatus.indexOf('✔')>=0?'var(--ac)':'var(--a4)')+';border-bottom:1px solid var(--br);background:rgba(0,0,0,.04);font-weight:700">'+solverStatus+'</div>';
   h+='<div style="padding:3px 10px;font-size:6.5px;color:var(--td);border-bottom:1px solid var(--br);background:rgba(0,0,0,.05)">';
   h+='<b style="color:var(--a3)">Fcst</b>=17-model consensus (what WW-DP uses as demand). <b style="color:var(--ac)">Act</b>=entered actuals. <b style="color:var(--a2)">Cap</b>=daily production capacity (allocated units/day from shared/parallel config). <b style="color:var(--ac)">WW-DP</b>=optimal production plan units. <b style="color:var(--a4)">EndInv</b>=end-of-month FG inventory. <b style="color:var(--dg)">Waste</b>=expiry units.';
+  h+='</div>';
+  var s4Mode = window._msHierMode || 'm';
+  h+='<div style="padding:4px 10px 6px;font-size:7px;color:var(--td);display:flex;gap:6px;align-items:center">View: ';
+  ['full','mw','m'].forEach(function(mode){
+    var label = (mode==='full'?'M+W+D':(mode==='mw'?'M+W':'M'));
+    h+='<button class="btnSm" style="'+(s4Mode===mode?'background:var(--a4);color:#000;border-color:var(--a4)':'')+'" onclick="window._msHierMode=\''+mode+'\';runMultiSKUPipeline();renderMultiSKUSummary();">'+label+'</button>';
+  });
   h+='</div>';
   h+='<div style="overflow-x:auto;padding:0">';
   h+='<table style="width:100%;border-collapse:collapse;font-family:JetBrains Mono,monospace;font-size:7.5px">';
@@ -1662,8 +1671,9 @@ function renderMultiSKUSummary(){
       // fill% bar mini
       var fp4=fcst4>0?Math.min(100,Math.round(mProd4/fcst4*100)):0;
       var fillColor4=fp4>=95?'var(--ac)':fp4>=80?'var(--a4)':'var(--dg)';
+      var actualInput4 = actual4 !== '—' ? actual4 : '';
       h+='<td style="padding:2px 4px;text-align:right;color:var(--a3);border-left:2px solid '+s.color+'">'+fcst4+'</td>';
-      h+='<td style="padding:2px 4px;text-align:right;color:var(--ac)">'+(actual4!=='—'?'<b>'+actual4+'</b>':actual4)+'</td>';
+      h+='<td style="padding:2px 4px;text-align:center;color:var(--ac)"><input class="eb" style="width:42px;font-size:7px;text-align:right" value="'+actualInput4+'" placeholder="—" onchange="updateActualsForSKU(\''+s.id+'\','+_s4mi+',this.value)"></td>';
       h+='<td style="padding:2px 4px;text-align:right;color:var(--a2)">'+dailyCap4+'×'+_wd4+'d</td>';
       h+='<td style="padding:2px 4px;text-align:right"><div style="display:flex;align-items:center;gap:2px;justify-content:flex-end">';
       h+='<div style="width:28px;height:5px;background:var(--s2);border-radius:1px;overflow:hidden"><div style="height:100%;width:'+fp4+'%;background:'+s.color+';opacity:0.7"></div></div>';
@@ -1672,6 +1682,52 @@ function renderMultiSKUSummary(){
       h+='<td style="padding:2px 4px;text-align:right;color:'+(mWaste4>0?'var(--dg)':'var(--td)')+'">'+( mWaste4>0?mWaste4+'u':'—')+'</td>';
     });
     h+='</tr>';
+    if(s4Mode!=='m'){
+      // Weekly breakdown (4 weeks per month) + optional daily when full mode
+      for(var wi=0;wi<4;wi++){
+        var weekLabel='W'+(wi+1);
+        h+='<tr style="background:rgba(255,255,255,.05)">';
+        h+='<td style="padding:2px 5px;color:var(--a2);font-size:6.5px">'+MNS[_s4mi]+' '+weekLabel+'</td>';
+        activeSkus.forEach(function(s){
+          var r=_multiSKU.results[s.id];
+          var trace4=r&&r.mps&&r.mps.trace?r.mps.trace:[];
+          var monthlyTrace=trace4.slice(_ds4,_ds4+_wd4);
+          var st=Math.floor(monthlyTrace.length*wi/4);
+          var ed=Math.floor(monthlyTrace.length*(wi+1)/4);
+          if(wi===3)ed=monthlyTrace.length;
+          var weekTrace=monthlyTrace.slice(st,ed);
+          var wProd=weekTrace.reduce(function(a,d){return a+(d.prod||0);},0);
+          var wInv=weekTrace.length>0?(weekTrace[weekTrace.length-1].inv||0):0;
+          var wWaste=weekTrace.reduce(function(a,d){return a+(d.exp||0);},0);
+          h+='<td style="padding:2px 4px;text-align:right;color:var(--a3);border-left:2px solid '+s.color+'">—</td>';
+          h+='<td style="padding:2px 4px;text-align:center;color:var(--ac)">—</td>';
+          h+='<td style="padding:2px 4px;text-align:right;color:var(--a2)">—</td>';
+          h+='<td style="padding:2px 4px;text-align:right;color:'+ (wProd>0?'var(--ac)':'var(--td)') +'">'+wProd+'</td>';
+          h+='<td style="padding:2px 4px;text-align:right;color:var(--a4)">'+wInv+'u</td>';
+          h+='<td style="padding:2px 4px;text-align:right;color:'+(wWaste>0?'var(--dg)':'var(--td)')+'">'+(wWaste>0?wWaste+'u':'—')+'</td>';
+        });
+        h+='</tr>';
+      }
+      if(s4Mode==='full'){
+        for(var di=0;di<_wd4;di++){
+          h+='<tr style="background:rgba(255,255,255,.03)">';
+          h+='<td style="padding:2px 5px;color:var(--td);font-size:6px">'+MNS[_s4mi]+' D'+(di+1)+'</td>';
+          activeSkus.forEach(function(s){
+            var r=_multiSKU.results[s.id];
+            var trace4b=r&&r.mps&&r.mps.trace?r.mps.trace:[];
+            var day=trace4b[_ds4+di]||{};
+            var dProd=day.prod||0;var dInv=day.inv||0;var dWaste=day.exp||0;
+            h+='<td style="padding:2px 4px;text-align:right;color:var(--a3);border-left:2px solid '+s.color+'">—</td>';
+            h+='<td style="padding:2px 4px;text-align:center;color:var(--ac)">—</td>';
+            h+='<td style="padding:2px 4px;text-align:right;color:var(--a2)">—</td>';
+            h+='<td style="padding:2px 4px;text-align:right;color:var(--ac)">'+dProd+'</td>';
+            h+='<td style="padding:2px 4px;text-align:right;color:var(--a4)">'+dInv+'u</td>';
+            h+='<td style="padding:2px 4px;text-align:right;color:'+(dWaste>0?'var(--dg)':'var(--td)')+'">'+(dWaste>0?dWaste+'u':'—')+'</td>';
+          });
+          h+='</tr>';
+        }
+      }
+    }
   }
   // Totals
   h+='<tr style="border-top:2px solid var(--br)">';
@@ -4370,9 +4426,11 @@ function genPolicyTrace(polName,batches,grossReq,hPerDay,POcost,T,eoqQ,poqP){
 // No server needed. Formulates proper MILP with binary setup variables.
 function runMILP(){
   if(!State.c.ech){alert('Run calculation first');return;}
-  if(typeof solver==='undefined'){
+  if(typeof solver==='undefined' || !solver || !solver.Solve){
     // Solver CDN not loaded — run rolling horizon WW-DP instead
-    runRollingHorizon();return;
+    State.c.milpMsg='⚠ LP solver missing: using Rolling Horizon WW-DP fallback';
+    runRollingHorizon();
+    return;
   }
   var C=State.c.ech,days=C.days,T=days.length;
   var yF=Math.max(State.p.yield/100,0.01);
